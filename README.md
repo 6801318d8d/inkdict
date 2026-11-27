@@ -1,4 +1,9 @@
-# inkdict
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo_dark.svg">
+    <img src="assets/logo.svg" alt="inkdict" width="360">
+  </picture>
+</h1>
 
 Dictionaries for e-readers (Kobo, Kindle, KOReader, PocketBook, Boox...) built from [Wiktionary](https://www.wiktionary.org):
 
