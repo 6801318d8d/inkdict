@@ -7,3 +7,7 @@
 
 # Binary data types
 *.zip binary
+
+# Launchers
+*.bat text eol=crlf
+*.sh  text eol=lf
