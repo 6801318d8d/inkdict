@@ -16,7 +16,11 @@ inkdict is a fork of [reader.dict's monolingual dictionaries](https://github.com
 - a graphical interface, with launchers for Windows and for GNU/Linux and macOS;
 - support for Windows (the code of the upstream project cannot be imported there).
 
-Ready-made monolingual dictionaries, built by the upstream project, can be downloaded from [reader.dict](https://www.reader-dict.com).
+## Ready-made dictionaries
+
+This fork builds the Italian (IT-IT), English-Italian (EN-IT) and Italian-English (IT-EN) dictionaries by itself whenever Wiktionary publishes a new dump (about twice a month), and publishes them in its [Releases](https://github.com/6801318d8d/inkdict/releases), with instructions for each e-reader. The list is `DEFAULT_LOCALES` in [.github/workflows/dictionaries.yml](.github/workflows/dictionaries.yml); a fork of this repository can build its own list the same way.
+
+Ready-made monolingual dictionaries in many more languages, built by the upstream project, can be downloaded from [reader.dict](https://www.reader-dict.com).
 
 ## How it works
 

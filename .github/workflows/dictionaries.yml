@@ -1,0 +1,162 @@
+name: Dictionaries
+
+# Every day, build each dictionary whose Wiktionary has a dump newer than the last release,
+# and publish it as a GitHub release `dict-<words>-<definitions>-<dump date>`.
+# Wiktionary dumps come out about twice a month, so most days nothing is built.
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      locales:
+        description: "Locales to build, space separated (it = IT-IT, it:en = English words in Italian, en:it = Italian words in English)"
+        default: "it it:en en:it"
+      force:
+        description: "Build even if the release already exists (it is replaced)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dictionaries
+  cancel-in-progress: false
+
+env:
+  DEFAULT_LOCALES: "it it:en en:it"
+  KINDLING_VER: "v0.46.2"
+  KINDLING_SHA256: "b61c883104c1f139313992d72e87e7c61617c31e59f5fe84748451b5cc6b11b0"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      builds: ${{ steps.plan.outputs.builds }}
+    steps:
+      - name: Find the dictionaries to build
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOCALES: ${{ inputs.locales || env.DEFAULT_LOCALES }}
+          FORCE: ${{ inputs.force || false }}
+        run: |
+          builds="[]"
+          for locale in $LOCALES; do
+            src=${locale%%:*}
+            dst=${locale#*:}
+            # The newest dump whose file is complete (the one being written is skipped, as `--download` does)
+            snapshot=""
+            for s in $(curl -sf "https://dumps.wikimedia.org/${src}wiktionary/" | grep -o 'href="[0-9]\{8\}/"' | grep -o '[0-9]\{8\}' | sort -r); do
+              if curl -sfI "https://dumps.wikimedia.org/${src}wiktionary/$s/${src}wiktionary-$s-pages-articles.xml.bz2" > /dev/null; then
+                snapshot=$s
+                break
+              fi
+            done
+            if [ -z "$snapshot" ]; then
+              echo "::warning::No dump found for $locale"
+              continue
+            fi
+            tag="dict-${dst}-${src}-${snapshot}"
+            if [ "$FORCE" != "true" ] && gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+              echo "$locale: $tag already released"
+              continue
+            fi
+            echo "$locale: building $tag"
+            builds=$(jq -c --arg l "$locale" --arg s "$snapshot" --arg t "$tag" '. + [{locale: $l, snapshot: $s, tag: $t}]' <<< "$builds")
+          done
+          echo "builds=$builds" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.builds != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.builds) }}
+    name: ${{ matrix.tag }}
+    env:
+      LOCALE: ${{ matrix.locale }}
+      FORCE_SNAPSHOT: ${{ matrix.snapshot }}
+      # /mnt has far more free space than / on GitHub's runners: the English dump is a 13 GB XML file
+      CWD: /mnt/inkdict
+      NO_COLOR: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install the requirements
+        run: python -m pip install -r requirements.txt
+
+      - name: Install kindling (Kindle dictionaries)
+        run: |
+          mkdir -p ~/.local/bin
+          curl -sfL "https://github.com/ciscoriordan/kindling/releases/download/${KINDLING_VER}/kindling-cli-linux" -o ~/.local/bin/kindling
+          echo "${KINDLING_SHA256}  $HOME/.local/bin/kindling" | sha256sum -c -
+          chmod a+x ~/.local/bin/kindling
+
+      - name: Working folder
+        run: |
+          sudo mkdir -p "$CWD"
+          sudo chown "$USER" "$CWD"
+          df -h / /mnt
+
+      - name: Download
+        run: python -m wikidict "$LOCALE" --download
+
+      - name: Parse
+        run: python -m wikidict "$LOCALE" --parse
+
+      - name: Render
+        run: python -m wikidict "$LOCALE" --render
+
+      - name: Convert
+        run: python -m wikidict "$LOCALE" --convert --format=dicthtml,stardict,stardict-nosyn,mobi,dictfile,dictorg
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ matrix.tag }}
+          SNAPSHOT: ${{ matrix.snapshot }}
+        run: |
+          src=${LOCALE%%:*}
+          dst=${LOCALE#*:}
+          words=$(python -c "from mediawiki_langcodes import code_to_name; print(code_to_name('$dst', 'en') or '$dst')")
+          defs=$(python -c "from mediawiki_langcodes import code_to_name; print(code_to_name('$src', 'en') or '$src')")
+          output="$CWD/data/$dst/$src/output"
+          ls -la "$output"
+          date="${SNAPSHOT:0:4}-${SNAPSHOT:4:2}-${SNAPSHOT:6:2}"
+          if [ "$src" = "$dst" ]; then
+            title="${words} dictionary (${date} dump)"
+            what="${words} words explained in ${words}"
+          else
+            title="${words}-${defs} dictionary (${date} dump)"
+            what="${words} words explained in ${defs}"
+          fi
+          cat > notes.md << EOF
+          ${what}, from the ${defs} Wiktionary dump of ${date} (locale \`${LOCALE}\`).
+
+          | File | For |
+          |------|-----|
+          | \`dicthtml-${dst}-${src}.zip\` | Kobo: copy it, as it is, into \`.kobo/custom-dict/\` |
+          | \`dict-${dst}-${src}.zip\` | KOReader: unzip it into \`koreader/data/dict/\`; GoldenDict, Boox... |
+          | \`dict-${dst}-${src}-nosyn.zip\` | StarDict readers that ignore the \`.syn\` file (Boox) |
+          | \`dict-${dst}-${src}.mobi.zip\` | Kindle: unzip it, and copy the \`.mobi\` file into \`documents/dictionaries/\` |
+          | \`dict-${dst}-${src}.df.bz2\` | DictFile (PocketBook, Vivlio) |
+          | \`dictorg-${dst}-${src}.zip\` | DICT.org (dictd) |
+
+          The \`-noetym\` files are the same dictionaries without etymologies. Each file has its SHA-256 checksum next to it.
+          The definitions come from Wiktionary, under the Creative Commons Attribution-ShareAlike license.
+          EOF
+          mapfile -t files < <(find "$output" -maxdepth 1 -type f | sort)
+          gh release delete "$TAG" -R "$GITHUB_REPOSITORY" --yes --cleanup-tag > /dev/null 2>&1 || true
+          gh release create "$TAG" -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$title" --notes-file notes.md "${files[@]}"
