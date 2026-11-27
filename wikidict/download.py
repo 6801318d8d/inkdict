@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import bz2
 import logging
 import os
 import re
-import shutil
 from datetime import timedelta
 from pathlib import Path
 from time import monotonic
@@ -26,34 +24,6 @@ from rich.progress import (
 from . import constants, utils
 
 log = logging.getLogger(__name__)
-
-
-def decompress(locale: str, file_in: Path, file_out: Path) -> None:
-    """Decompress a BZ2 file."""
-    msg = f"Uncompressing into {file_out}"
-    log.info(msg)
-
-    if file_out.is_file():
-        return
-
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[bold blue]{task.description}"),
-        BarColumn(complete_style="green", finished_style="bold green"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task = progress.add_task(f"[cyan][{locale.upper()}] Decompressing dump", total=None)
-
-        with bz2.BZ2File(file_in, mode="rb") as fr, file_out.open(mode="wb") as fw:
-            shutil.copyfileobj(fr, fw)
-
-        # Final update to ensure we show 100%
-        progress.update(
-            task,
-            total=100,
-            completed=100,
-            description=f"[magenta][{locale.upper()}] Decompressed dump [green]✓[/green]",
-        )
 
 
 def fetch_snapshots(locale: str) -> list[str]:
@@ -116,10 +86,6 @@ def get_output_file_compressed(locale: str, snapshot: str) -> Path:
     return Path(os.getenv("CWD", "")) / "data" / locale / f"pages-{snapshot}.xml.bz2"
 
 
-def get_output_file_uncompressed(file: Path) -> Path:
-    return file.with_suffix(file.suffix.replace(".bz2", ""))
-
-
 def main(locale: str) -> int:
     """Entry point."""
 
@@ -129,19 +95,14 @@ def main(locale: str) -> int:
     # Get the snapshot to handle
     snapshots = fetch_snapshots(locale)
 
-    # Fetch and uncompress the snapshot file
+    # Fetch the snapshot file (--parse reads it compressed)
     for snapshot in snapshots[::-1]:
         file_compressed = get_output_file_compressed(locale, snapshot)
-        file_uncompressed = get_output_file_uncompressed(file_compressed)
         try:
             fetch_pages(snapshot, locale, file_compressed)
-            # Already parsed (for another dictionary of the same Wiktionary): the big XML file is not needed
-            if not file_compressed.with_name(f"pages-{snapshot}.sqlite").is_file():
-                decompress(locale, file_compressed, file_uncompressed)
             break
         except HTTPError as exc:
             file_compressed.unlink(missing_ok=True)
-            file_uncompressed.unlink(missing_ok=True)
             if exc.response.status_code != 404:
                 raise
             log.warning("Wiktionary dump is ongoing ... ")

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import bz2
+import codecs
+import io
 import logging
+import multiprocessing
 import os
 import re
 from datetime import timedelta
@@ -29,6 +33,7 @@ from .lang.da.langs import langs as langs_da
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterator
+    from multiprocessing.connection import Connection
 
 
 log = logging.getLogger(__name__)
@@ -40,6 +45,53 @@ RE_TITLE_WORD = re.compile(r"<title>([^:<]++)</title>").search
 # To list all words not taken into account with current head sections:
 #    DEBUG_PARSE=1 python -m wikidict LOCALE --parse >out.log
 DEBUG_PARSE = "DEBUG_PARSE" in os.environ
+
+XML_CHUNK_SIZE = 8 * 1024 * 1024
+
+
+def decompress_to(file: Path, conn: Connection) -> None:
+    """Send the decompressed `file`, in chunks, each with how many bytes of `file` have been read."""
+    with file.open("rb") as raw, bz2.BZ2File(raw) as fh:
+        while chunk := fh.read(XML_CHUNK_SIZE):
+            conn.send((chunk, raw.tell()))
+    conn.send(None)
+
+
+def read_text(file: Path) -> Generator[tuple[str, int]]:
+    """The text of an XML dump in big chunks, each with how many bytes of `file` have been read.
+
+    A `.bz2` dump is decompressed by another process meanwhile: decompression and parsing run in parallel,
+    and the XML file (13 GB for the English Wiktionary) is never written.
+    """
+    if file.suffix != ".bz2":
+        with file.open(encoding="utf-8") as fh:
+            while chunk := fh.read(XML_CHUNK_SIZE):
+                yield chunk, fh.buffer.tell()  # type: ignore[attr-defined]
+        return
+
+    # As the text mode of open(): UTF-8, and "\r\n" or "\r" read as "\n", also when split between two chunks
+    decoder = io.IncrementalNewlineDecoder(codecs.getincrementaldecoder("utf-8")(), translate=True)
+    receiver, sender = multiprocessing.Pipe(duplex=False)
+    process = multiprocessing.Process(target=decompress_to, args=(file, sender), daemon=True)
+    process.start()
+    sender.close()
+    try:
+        while True:
+            try:
+                item = receiver.recv()
+            except EOFError:
+                process.join()
+                msg = f"The decompression of {file} stopped (exit code {process.exitcode})"
+                raise RuntimeError(msg) from None
+            if item is None:
+                break
+            chunk, done = item
+            yield decoder.decode(chunk), done
+        if tail := decoder.decode(b"", final=True):
+            yield tail, file.stat().st_size
+    finally:
+        receiver.close()
+        process.join(timeout=10)
 
 
 def xml_iter_parse(file: Path, locale: str) -> Generator[str]:
@@ -65,28 +117,22 @@ def xml_iter_parse(file: Path, locale: str) -> Generator[str]:
     ) as progress:
         task = progress.add_task(f"[cyan][{lang_src.upper()}-{lang_dst.upper()}] Parsing {file.name}", total=file_size)
 
-        with file.open(encoding="utf-8") as fh:
-            current_size = fh.buffer.tell  # type: ignore[attr-defined]
-            current_page: list[str] = []
-            in_page = False
-            start_tag = "  <page>\n"
-            end_tag = "  </page>\n"
-            lines = 0
+        # Each page is the text between a line "  <page>" and a line "  </page>". They are searched in big blocks
+        # with str.find(), much faster than a Python loop on every line (raw "<" never occurs in the text: "&lt;").
+        start_tag = "\n  <page>\n"
+        end_tag = "\n  </page>\n"
+        buffer = "\n"  # a page may start the file
 
-            for line in fh:
-                if in_page:
-                    if line == end_tag:
-                        yield "".join(current_page)
-                        current_page.clear()
-                        in_page = False
-                    else:
-                        current_page.append(line)
-                elif line == start_tag:
-                    in_page = True
-
-                if (lines := lines + 1) == 100:
-                    lines = 0
-                    progress.update(task, completed=current_size())
+        for chunk, done in read_text(file):
+            buffer += chunk
+            pos = 0
+            while (start := buffer.find(start_tag, pos)) != -1 and (
+                end := buffer.find(end_tag, start + len(start_tag) - 1)
+            ) != -1:
+                yield buffer[start + len(start_tag) : end + 1]
+                pos = end + len(end_tag) - 1  # the newline ending "  </page>" also starts the next "  <page>"
+            buffer = buffer[pos:]
+            progress.update(task, completed=done)
 
         # Final update to ensure we show 100%
         progress.update(
@@ -405,12 +451,6 @@ def get_latest_dump_file(source_dir: Path) -> Path | None:
     return max(files) if files else None
 
 
-def get_latest_xml_file(source_dir: Path) -> Path | None:
-    """Get the name of the last pages-*.xml file."""
-    files = list(source_dir.glob(f"pages-{'[0-9]' * 8}.xml"))
-    return max(files) if files else None
-
-
 def get_source_dir(lang_src: str) -> Path:
     return Path(os.getenv("CWD", "")) / "data" / lang_src
 
@@ -426,24 +466,22 @@ def main(locale: str) -> int:
     lang_src, _ = utils.guess_locales(locale)
 
     source_dir = get_source_dir(lang_src)
-    if not (input_file := get_latest_xml_file(source_dir)):
-        # The XML file is deleted once parsed: the dump may be parsed already, for another dictionary of this Wiktionary
-        dump = get_latest_dump_file(source_dir)
-        if dump and (output := get_output_file(source_dir, dump.stem[6:14])).is_file():
-            log.info("Already parsed into %s", output)
-            return 0
+    if not (dump := get_latest_dump_file(source_dir)):
         log.error("No dump found. Run with --download first ... ")
         return 1
 
+    # The .bz2 dump is read directly; an XML file extracted by an older version is read instead, then deleted
+    input_file = xml if (xml := dump.with_suffix("")).is_file() else dump
+
     ret = 0
-    output = get_output_file(source_dir, input_file.stem[6:14])
+    output = get_output_file(source_dir, dump.stem[6:14])
     if output.is_file():
         log.info("Already parsed into %s", output)
     # The database holds every page of the dump and is shared by all the dictionaries built from it
     # (`it`, `it:en`, ...): always parse it as the source Wiktionary, so that its modules are stored.
     elif process(input_file, lang_src):
-        # Do not keep the (big) XML file
-        input_file.unlink()
+        if input_file == xml:
+            input_file.unlink()
     else:
         ret = 1
 

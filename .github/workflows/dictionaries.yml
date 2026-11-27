@@ -82,7 +82,7 @@ jobs:
     env:
       LOCALE: ${{ matrix.locale }}
       FORCE_SNAPSHOT: ${{ matrix.snapshot }}
-      # /mnt has far more free space than / on GitHub's runners: the English dump is a 13 GB XML file
+      # /mnt has far more free space than / on GitHub's runners: the database of the English dump takes about 9 GB
       CWD: /mnt/inkdict
       NO_COLOR: "1"
     steps:

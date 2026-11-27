@@ -13,7 +13,7 @@ Usage:
     wikidict LOCALE --show-pos
 
 Options:
-  --download                Retrieve the latest Wiktionary dump into "data/$LOCALE/pages-$DATE.xml".
+  --download                Retrieve the latest Wiktionary dump into "data/$LOCALE/pages-$DATE.xml.bz2".
   --parse                   Parse and store raw Wiktionary data into "data/$LOCALE/pages-$DATE.sqlite".
   --render                  Render templates from raw data into "data/$LOCALE/data-$DATE.json".
                               --workers=N  Set the number of multiprocessing workers, defaults to the number of CPU in the system.

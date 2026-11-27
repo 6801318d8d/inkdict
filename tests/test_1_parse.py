@@ -35,11 +35,8 @@ def test_simple() -> None:
     assert parse.main("fr") == 0
 
 
-def test_no_xml_file() -> None:
-    with (
-        patch.object(parse, "get_latest_xml_file", return_value=None),
-        patch.object(parse, "get_latest_dump_file", return_value=None),
-    ):
+def test_no_dump_file() -> None:
+    with patch.object(parse, "get_latest_dump_file", return_value=None):
         assert parse.main("fr") == 1
 
 
@@ -269,7 +266,7 @@ def test_parse_word_with_templates_lowercased(tmp_path: Path) -> None:
 )
 def test_sublang(locale: str, lang_src: str, lang_dst: str, tmp_path: Path) -> None:
     snapshot = "20250401"
-    pages = Path(f"pages-{snapshot}.xml")
+    pages = Path(f"pages-{snapshot}.xml.bz2")  # read compressed: no XML file next to it
     words: dict[str, str] = {}
 
     with patch.dict("os.environ", {"CWD": str(tmp_path)}):
@@ -281,16 +278,16 @@ def test_sublang(locale: str, lang_src: str, lang_dst: str, tmp_path: Path) -> N
 
         with (
             patch.object(parse, "get_source_dir") as mocked_gsd,
-            patch.object(parse, "get_latest_xml_file") as mocked_glxf,
+            patch.object(parse, "get_latest_dump_file") as mocked_gldf,
             patch.object(parse, "process") as mocked_p,
         ):
-            mocked_glxf.return_value = pages
+            mocked_gldf.return_value = pages
             mocked_gsd.return_value = source_dir
             mocked_p.return_value = words
 
             parse.main(locale)
             mocked_gsd.assert_called_once_with(lang_src)
-            mocked_glxf.assert_called_once_with(source_dir)
+            mocked_gldf.assert_called_once_with(source_dir)
             mocked_p.assert_called_once_with(pages, lang_src)
 
 

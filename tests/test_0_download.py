@@ -39,7 +39,7 @@ def cleanup(folder: Path) -> None:
 
 @responses.activate
 def test_simple(craft_data: Callable[[str], bytes]) -> None:
-    """It should download the Wiktionary dump file and extract it."""
+    """It should download the Wiktionary dump file, and not extract it (--parse reads it compressed)."""
 
     output_dir = Path(os.environ["CWD"]) / "data" / "fr"
 
@@ -58,7 +58,7 @@ def test_simple(craft_data: Callable[[str], bytes]) -> None:
     responses.add(responses.GET, DUMP_URL.format(locale="fr", snapshot=dump), body=craft_data("fr"))
 
     assert download.main("fr") == 0
-    assert pages_xml.is_file()
+    assert not pages_xml.is_file()
     assert pages_bz2.is_file()
 
 
@@ -81,7 +81,7 @@ def test_download_already_done(craft_data: Callable[[str], bytes]) -> None:
     responses.add(responses.GET, BASE_URL.format(locale="fr"), body=WIKTIONARY_INDEX)
 
     assert download.main("fr") == 0
-    assert pages_xml.is_file()
+    assert not pages_xml.is_file()
     assert pages_bz2.is_file()
 
 
@@ -111,12 +111,8 @@ def test_ongoing_dump(craft_data: Callable[[str], bytes]) -> None:
     for dump in DUMPS:
         page_xml = output_dir / f"pages-{dump}.xml"
         page_bz2 = output_dir / f"pages-{dump}.xml.bz2"
-        if dump == expected_dump:
-            assert page_xml.is_file()
-            assert page_bz2.is_file()
-        else:
-            assert not page_xml.is_file()
-            assert not page_bz2.is_file()
+        assert not page_xml.is_file()
+        assert page_bz2.is_file() == (dump == expected_dump)
 
 
 @responses.activate
@@ -152,7 +148,6 @@ def test_no_dump_found(craft_data: Callable[[str], bytes]) -> None:
 def test_sublang(locale: str, lang_src: str, lang_dst: str, tmp_path: Path) -> None:
     snapshot = "20250401"
     pages_compressed = Path(f"pages-{snapshot}.xml.bz2")
-    pages_uncompressed = Path(f"pages-{snapshot}.xml")
 
     with patch.dict("os.environ", {"CWD": str(tmp_path), "FORCE_SNAPSHOT": snapshot}):
         assert download.fetch_snapshots(lang_src) == [snapshot]
@@ -160,19 +155,12 @@ def test_sublang(locale: str, lang_src: str, lang_dst: str, tmp_path: Path) -> N
         output_compressed = download.get_output_file_compressed(lang_src, snapshot)
         assert output_compressed == tmp_path / "data" / lang_src / pages_compressed
 
-        output_uncompressed = download.get_output_file_uncompressed(output_compressed)
-        assert output_uncompressed == tmp_path / "data" / lang_src / pages_uncompressed
-
         with (
             patch.object(download, "get_output_file_compressed") as mocked_gofc,
-            patch.object(download, "get_output_file_uncompressed") as mocked_gofu,
             patch.object(download, "fetch_pages") as mocked_fp,
-            patch.object(download, "decompress") as mocked_d,
         ):
             mocked_gofc.return_value = pages_compressed
 
             download.main(locale)
             mocked_gofc.assert_called_once_with(lang_src, snapshot)
-            mocked_gofu.assert_called_once_with(pages_compressed)
             mocked_fp.assert_called_once_with(snapshot, lang_src, pages_compressed)
-            mocked_d.assert_called_once_with(lang_src, pages_compressed, mocked_gofu())
