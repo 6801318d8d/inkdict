@@ -2,7 +2,7 @@
 Finally descent dictionaries based on Wiktionary for your beloved eBook reader.
 
 You can always get the latest version of this module at:
-    https://github.com/reader-dict/monolingual
+    https://github.com/6801318d8d/inkdict (a fork of https://github.com/reader-dict/monolingual)
 """
 
 __version__ = "6.0.0"

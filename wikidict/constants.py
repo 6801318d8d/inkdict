@@ -1,14 +1,15 @@
 """Shared constants."""
 
 import html.entities
+import sys
 from pathlib import Path
 
 import requests
 
 # Dictionaries metadata
-PROJECT = "reader.dict"
+PROJECT = "inkdict"
 TITLE = "{project} {langs}"
-WEBSITE = "https://www.reader-dict.com"
+WEBSITE = "https://github.com/6801318d8d/inkdict"
 
 # Wiktionary dump URL
 BASE_URL = "https://dumps.wikimedia.org/{locale}wiktionary"
@@ -35,7 +36,7 @@ LOCALE_ORIGIN = {"fro": "fr"}
 
 # Mobi
 COVER_FILE = Path(__file__).parent / "cover.png"
-MOBIPOCKET_TOOL = Path.home() / ".local" / "bin" / "kindling"
+MOBIPOCKET_TOOL = Path.home() / ".local" / "bin" / ("kindling.exe" if sys.platform == "win32" else "kindling")
 
 # HTTP requests
 SESSION = requests.Session()

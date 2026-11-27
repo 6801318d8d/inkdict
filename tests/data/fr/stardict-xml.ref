@@ -2,14 +2,14 @@
 <stardict xmlns:xi="http://www.w3.org/2003/XInclude">
 <info>
 <version>3.0.0</version>
-<bookname>reader.dict FR</bookname>
-<author>reader.dict</author>
+<bookname>inkdict FR</bookname>
+<author>inkdict</author>
 <email></email>
-<website>https://www.reader-dict.com</website>
+<website>https://github.com/6801318d8d/inkdict</website>
 <description>Clean, optimized dictionary generated from Wiktionary data.
 Contains 44 entries with etymologies.
 
-© reader.dict 2026</description>
+© inkdict 2026</description>
 <date>2020-12-17</date>
 <dicttype></dicttype>
 </info>

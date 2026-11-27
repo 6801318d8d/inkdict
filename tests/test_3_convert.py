@@ -145,7 +145,7 @@ def check_dicthtml(file: Path) -> None:
     ]
 
     with ZipFile(file) as fh:
-        assert fh.comment.decode(encoding="utf-8") == "© reader.dict 2026"
+        assert fh.comment.decode(encoding="utf-8") == "© inkdict 2026"
 
         assert sorted(fh.namelist()) == expected_files
 
@@ -165,7 +165,7 @@ def check_dicthtml(file: Path) -> None:
 
 
 def check_mobi(file: Path, tmp_dir: Path) -> None:
-    mobi_file = "reader.dict-fr.mobi"
+    mobi_file = "inkdict-fr.mobi"
     with ZipFile(file) as fh:
         fh.extract(mobi_file, tmp_dir)
     tempdir, _ = mobi.extract(str(tmp_dir / mobi_file))
@@ -188,20 +188,20 @@ def check_mobi(file: Path, tmp_dir: Path) -> None:
 
 def check_stardict(file: Path, tmp_dir: Path) -> None:
     expected_files = [
-        "reader.dict-fr.dict.dz",
-        "reader.dict-fr.idx",
-        "reader.dict-fr.ifo",
-        "reader.dict-fr.syn",
+        "inkdict-fr.dict.dz",
+        "inkdict-fr.idx",
+        "inkdict-fr.ifo",
+        "inkdict-fr.syn",
     ]
     expected_ifo_lines = [
         "StarDict's dict ifo file",
         "version=3.0.0",
-        "bookname=reader.dict FR",
+        "bookname=inkdict FR",
         "wordcount=39",
         "idxfilesize=619",
-        "author=reader.dict",
-        "website=https://www.reader-dict.com",
-        f"description=Clean, optimized dictionary generated from Wiktionary data.<br>Contains 44 entries with etymologies.<br><br>© reader.dict {datetime.now(tz=UTC).year}",
+        "author=inkdict",
+        "website=https://github.com/6801318d8d/inkdict",
+        f"description=Clean, optimized dictionary generated from Wiktionary data.<br>Contains 44 entries with etymologies.<br><br>© inkdict {datetime.now(tz=UTC).year}",
         "date=2020-12-17",
         "sametypesequence=h",
         "synwordcount=5",
@@ -213,7 +213,7 @@ def check_stardict(file: Path, tmp_dir: Path) -> None:
         errors = fh.testzip()
         assert errors is None
 
-        ifo = fh.read("reader.dict-fr.ifo").decode()
+        ifo = fh.read("inkdict-fr.ifo").decode()
         assert ifo.splitlines() == expected_ifo_lines
 
     # Check file conformity
@@ -240,7 +240,7 @@ def check_stardict(file: Path, tmp_dir: Path) -> None:
 
     # This is a reliable way to ensure variants are properly handled
     xml_file = tmp_dir / "output.xml"
-    subprocess.check_call(["/usr/lib/stardict-tools/stardict-bin2text", output_dir / "reader.dict-fr.ifo", xml_file])
+    subprocess.check_call(["/usr/lib/stardict-tools/stardict-bin2text", output_dir / "inkdict-fr.ifo", xml_file])
     reference_xml = Path(os.environ["CWD"]) / "data" / "fr" / "stardict-xml.ref"
     assert xml_file.read_text() == reference_xml.read_text()
 
@@ -248,9 +248,9 @@ def check_stardict(file: Path, tmp_dir: Path) -> None:
 def read_stardict(file: Path) -> tuple[list[tuple[str, str]], dict[str, list[int]]]:
     """Return the words with their article, and the variants with the number of their words."""
     with ZipFile(file) as fh:
-        idx = fh.read("reader.dict-fr.idx")
-        syn = fh.read("reader.dict-fr.syn")
-        data = gzip.decompress(fh.read("reader.dict-fr.dict.dz"))
+        idx = fh.read("inkdict-fr.idx")
+        syn = fh.read("inkdict-fr.syn")
+        data = gzip.decompress(fh.read("inkdict-fr.dict.dz"))
     words, pos = [], 0
     while pos < len(idx):
         end = idx.index(b"\0", pos)
@@ -268,26 +268,26 @@ def read_stardict(file: Path) -> tuple[list[tuple[str, str]], dict[str, list[int
 
 def check_stardict_nosyn(file: Path, stardict_file: Path, tmp_dir: Path) -> None:
     expected_files = [
-        "reader.dict-fr.dict.dz",
-        "reader.dict-fr.idx",
-        "reader.dict-fr.ifo",
+        "inkdict-fr.dict.dz",
+        "inkdict-fr.idx",
+        "inkdict-fr.ifo",
     ]
     expected_ifo_lines = [
         "StarDict's dict ifo file",
         "version=3.0.0",
-        "bookname=reader.dict FR",
+        "bookname=inkdict FR",
         "wordcount=42",
         "idxfilesize=670",
-        "author=reader.dict",
-        "website=https://www.reader-dict.com",
-        f"description=Clean, optimized dictionary generated from Wiktionary data.<br>Contains 42 entries with etymologies.<br><br>© reader.dict {datetime.now(tz=UTC).year}",
+        "author=inkdict",
+        "website=https://github.com/6801318d8d/inkdict",
+        f"description=Clean, optimized dictionary generated from Wiktionary data.<br>Contains 42 entries with etymologies.<br><br>© inkdict {datetime.now(tz=UTC).year}",
         "date=2020-12-17",
         "sametypesequence=h",
     ]
     with ZipFile(file) as fh:
         assert sorted(fh.namelist()) == expected_files
         assert fh.testzip() is None
-        assert fh.read("reader.dict-fr.ifo").decode().splitlines() == expected_ifo_lines
+        assert fh.read("inkdict-fr.ifo").decode().splitlines() == expected_ifo_lines
 
     # Each word and variant of the StarDict file shows the same articles, its own one first
     words, variants = read_stardict(stardict_file)
@@ -764,8 +764,8 @@ def test_kindle_format(locale: str, words: Words, word: str, expected: str, tmp_
 def read_stardict_nosyn(file: Path) -> dict[str, str]:
     """Return the article shown for each entry of the .idx file."""
     with ZipFile(file) as fh:
-        idx = fh.read("reader.dict-fr.idx")
-        data = gzip.decompress(fh.read("reader.dict-fr.dict.dz"))
+        idx = fh.read("inkdict-fr.idx")
+        data = gzip.decompress(fh.read("inkdict-fr.dict.dz"))
     articles, pos = {}, 0
     while pos < len(idx):
         end = idx.index(b"\0", pos)
@@ -813,7 +813,7 @@ def test_stardict_nosyn_format(words: Words, expected: dict[str, list[str]], tmp
     convert.run_formatter(convert.StarDictNoSynFormat, "fr", tmp_path, words, convert.make_variants(words), "20251105")
     file = tmp_path / "dict-fr-fr-nosyn.zip"
     with ZipFile(file) as fh:
-        assert sorted(fh.namelist()) == ["reader.dict-fr.dict.dz", "reader.dict-fr.idx", "reader.dict-fr.ifo"]
+        assert sorted(fh.namelist()) == ["inkdict-fr.dict.dz", "inkdict-fr.idx", "inkdict-fr.ifo"]
 
     # Entries are sorted, and the articles shown for each one start with their word
     articles = read_stardict_nosyn(file)

@@ -1,5 +1,5 @@
 """
-reader.dict (https://www.reader-dict.com)
+inkdict (https://github.com/6801318d8d/inkdict), a fork of reader.dict (https://www.reader-dict.com)
 
 Usage:
     wikidict LOCALE
