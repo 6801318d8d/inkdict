@@ -7,9 +7,10 @@ Environment:
   BUDGET_MINUTES     no new dictionary is started after that many minutes of job: the rest waits for the next run
   CWD                the working folder that holds data/
   FORMATS            the --format value of --convert
+  MIN_WORDS          dictionaries with fewer entries are not published
 Each dictionary becomes the release `dict-<words>-<definitions>-<snapshot>`, and its releases of older dumps are
-deleted. Pairs with no word, or that fail, are recorded in `status-<source>.json` of the release `build-status`,
-so that they are not retried before the next dump.
+deleted. Pairs with no word, too few, or that fail, are recorded in `status-<source>.json` of the release
+`build-status`, so that they are not retried before the next dump.
 """
 
 import json
@@ -125,8 +126,15 @@ def save_status(recorded: dict[str, str]) -> None:
     gh("release", "upload", STATUS_RELEASE, "-R", REPO, str(file), "--clobber")
 
 
+def count_words(src: str, dst: str) -> int:
+    """Entries rendered for the dictionary (the JSON written by --render)."""
+    files = sorted((DATA / dst / src).glob("data-*.json"))
+    return len(json.loads(files[-1].read_text(encoding="utf-8"))) if files else 0
+
+
 def main() -> int:
     budget = int(os.environ.get("BUDGET_MINUTES", "240")) * 60
+    min_words = int(os.environ.get("MIN_WORDS", "1000"))
     job_start = int(os.environ["JOB_START"])
     results: dict[str, str] = {}
     recorded: dict[str, str] = {}
@@ -147,6 +155,8 @@ def main() -> int:
                     fh.seek(size)
                     output += fh.read()
             results[locale] = recorded[locale] = "empty" if "No word found" in output else "failed (render)"
+        elif (words := count_words(src, dst)) < min_words:
+            results[locale] = recorded[locale] = f"too small ({words} words)"
         elif run(sys.executable, "-m", "wikidict", locale, "--convert", f"--format={os.environ['FORMATS']}")[0]:
             results[locale] = recorded[locale] = "failed (convert)"
         else:

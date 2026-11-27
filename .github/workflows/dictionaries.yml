@@ -34,6 +34,7 @@ env:
   MONOLINGUAL_ONLY: "jbo"  # no foreign_head_sections
   EXTRA_LOCALES: ""
   BUDGET_MINUTES: "240"
+  MIN_WORDS: "1000"  # smaller dictionaries are not published
   FORMATS: "dicthtml,stardict,stardict-nosyn,mobi,dictfile,dictorg"
   KINDLING_VER: "v0.46.2"
   KINDLING_SHA256: "b61c883104c1f139313992d72e87e7c61617c31e59f5fe84748451b5cc6b11b0"
