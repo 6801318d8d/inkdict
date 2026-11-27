@@ -15,6 +15,7 @@ template_trans = "Txantiloi"
 section_patterns = (":#", r":\*", "#", r"\*")
 section_sublevels = (3, 4)
 head_sections = ("eu",)
+foreign_head_sections = ("$code",)
 etyl_section = ("jatorria", "Jatorria")
 sections = (
     *etyl_section,

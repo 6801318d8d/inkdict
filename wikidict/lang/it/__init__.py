@@ -12,6 +12,7 @@ module_trans = "Modulo"
 
 section_patterns = ("#", r"\*")
 head_sections = ("{{-it-}}",)
+foreign_head_sections = ("{{-$code-}}",)
 etyl_section = ("{{etim}}",)
 sections = (
     *head_sections,

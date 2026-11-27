@@ -1,5 +1,6 @@
 docopt==0.6.2
 jaconv>=0.5.0
+langcodes>=3.5.1  # ISO 639-3 codes of the headword language, for bilingual dictionaries
 Jinja2==3.1.6
 marisa-trie==1.4.1
 mediawiki-langcodes==0.2.28  # for up-to-date langs data, required by wikitextprocessor

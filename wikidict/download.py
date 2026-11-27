@@ -135,7 +135,9 @@ def main(locale: str) -> int:
         file_uncompressed = get_output_file_uncompressed(file_compressed)
         try:
             fetch_pages(snapshot, locale, file_compressed)
-            decompress(locale, file_compressed, file_uncompressed)
+            # Already parsed (for another dictionary of the same Wiktionary): the big XML file is not needed
+            if not file_compressed.with_name(f"pages-{snapshot}.sqlite").is_file():
+                decompress(locale, file_compressed, file_uncompressed)
             break
         except HTTPError as exc:
             file_compressed.unlink(missing_ok=True)

@@ -21,6 +21,7 @@ head_sections = (
     "{{-lingua-|la}",
     "latice",
 )
+foreign_head_sections = ("{{-$code-", "{{-lingua-|$code|", "{{-lingua-|$code}")
 section_sublevels = (3, 4)
 etyl_section = ("Notatio",)
 # https://la.wiktionary.org/w/index.php?title=Modulus:partes_orationis/data&oldid=195652

@@ -14,6 +14,7 @@ random_word_url = "https://el.wiktionary.org/wiki/%CE%95%CE%B9%CE%B4%CE%B9%CE%BA
 template_trans = "Πρότυπο"
 
 head_sections = ("{{-el-}}",)
+foreign_head_sections = ("{{-$code-}}",)
 etyl_section = ("{{ετυμολογία}}",)
 section_sublevels = (3, 4)
 section_patterns = ("#", r"\*")

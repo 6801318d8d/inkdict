@@ -17,6 +17,7 @@ template_trans = "Шаблон"
 section_level = 1
 section_sublevels = (3, 4)
 head_sections = ("uk", "mul")
+foreign_head_sections = ("$code",)
 etyl_section = ("етимологія",)
 sections = (
     *etyl_section,

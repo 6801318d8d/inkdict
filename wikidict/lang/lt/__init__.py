@@ -16,6 +16,7 @@ section_patterns = ("#", r"\*")
 sublist_patterns = ("#", r"\*", ":")
 section_sublevels = (3, 4)
 head_sections = ("{{ltv}}",)
+foreign_head_sections = ("{{${code}v}}",)
 etyl_section = ("etimologija",)
 sections = (
     *etyl_section,

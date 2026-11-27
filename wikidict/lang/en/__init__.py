@@ -11,6 +11,7 @@ from .variant_handlers import handlers as variant_handlers  # noqa: F401
 random_word_url = "https://en.wiktionary.org/wiki/Special:RandomInCategory/English_lemmas#English"
 
 head_sections = ("english", "translingual")
+foreign_head_sections = ("$name",)
 section_patterns = ("#", r"\*")
 sublist_patterns = ("#", ":")
 section_sublevels = (3, 4, 5)

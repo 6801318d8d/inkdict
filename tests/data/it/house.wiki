@@ -1,0 +1,22 @@
+== {{-en-}} ==
+{{-sost-|en}}
+{{Pn}} {{Linkp|houses}}
+#{{Term|architettura|en}} [[casa]]
+
+{{-verb-|en}}
+'''to''' {{Pn}} {{En-verb|houses|housing|housed}}
+# [[alloggiare]]
+
+{{-sill-}}
+; house
+
+{{-pron-}}
+* ''(sostantivo)'' {{IPA|/haʊs/}}
+* ''(verbo)'' {{IPA|/haʊz/}}
+
+{{-ref-}}
+*[http://en.wiktionary.org/wiki/house   Wikizionario, edizione inglese]
+*{{Fonte|wrenit}}
+*{{Fonte|desan|en}}
+*{{Fonte|tfd|house}}
+*{{Fonte|mew}}

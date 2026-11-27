@@ -4,6 +4,7 @@ import re
 from collections.abc import Callable
 
 from ... import context, lang, utils
+from .. import defaults
 from . import variant_handlers as variant_handlers_mod
 from .variant_handlers import handlers as variant_handlers  # noqa: F401
 
@@ -16,6 +17,22 @@ head_sections = (
     "polski",  # Polish
     "międzynarodowe",  # international
 )
+foreign_head_sections = ("$name",)
+
+
+def foreign_names(code: str, locale: str) -> tuple[str, ...]:
+    """Sections are introduced by `{{język angielski}}`, reduced to `angielski` at parsing time.
+
+    >>> foreign_names("en", "pl")
+    ('angielski',)
+    >>> foreign_names("de", "pl")
+    ('niemiecki', 'język niemiecki')
+
+    """
+    names = defaults.foreign_names(code, locale)
+    return tuple(dict.fromkeys([name.removeprefix("język ") for name in names] + list(names)))
+
+
 section_patterns = (
     r":[ ]*\(\d+\.\d+\)",  # `: (1.1) ...`
     r":[ ]*\(\d+\.\d+-\d+\)",  # `: (1.1–2) ...`

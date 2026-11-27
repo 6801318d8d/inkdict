@@ -36,7 +36,10 @@ def test_simple() -> None:
 
 
 def test_no_xml_file() -> None:
-    with patch.object(parse, "get_latest_xml_file", return_value=None):
+    with (
+        patch.object(parse, "get_latest_xml_file", return_value=None),
+        patch.object(parse, "get_latest_dump_file", return_value=None),
+    ):
         assert parse.main("fr") == 1
 
 
@@ -288,7 +291,7 @@ def test_sublang(locale: str, lang_src: str, lang_dst: str, tmp_path: Path) -> N
             parse.main(locale)
             mocked_gsd.assert_called_once_with(lang_src)
             mocked_glxf.assert_called_once_with(source_dir)
-            mocked_p.assert_called_once_with(pages, locale)
+            mocked_p.assert_called_once_with(pages, lang_src)
 
 
 @pytest.mark.parametrize(

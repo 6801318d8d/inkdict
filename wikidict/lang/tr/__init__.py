@@ -13,6 +13,7 @@ template_trans = "Şablon"
 
 section_sublevels = (3, 4, 5)
 head_sections = ("türkçe",)
+foreign_head_sections = ("$name",)
 etyl_section = ("köken",)
 sections = (
     *etyl_section,

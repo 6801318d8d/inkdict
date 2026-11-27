@@ -19,6 +19,7 @@ sublist_patterns = ("#", r"\*")
 section_level = 1
 section_sublevels = (2, 3, 4)
 head_sections = ("{{-pt-}}", "{{-mult-}}")
+foreign_head_sections = ("{{-$code-}}",)
 etyl_section = ("{{etimologia|pt}}", "{{etimologia|mult}}", "etimologia")
 _sections = [
     "abreviação",

@@ -10,6 +10,7 @@ random_word_url = "https://mg.wiktionary.org/wiki/Manokana:Kisendra"
 template_trans = "Endrika"
 
 head_sections = ("{{=mg=}}", "{{=mul=}}")
+foreign_head_sections = ("{{=$code=}}",)
 etyl_section = ("etim",)
 sections = (
     *etyl_section,

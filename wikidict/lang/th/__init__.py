@@ -15,6 +15,7 @@ head_sections = (
     "ภาษาไทย",  # Thai
     "ภาษาร่วม",  # Translingual
 )
+foreign_head_sections = ("$name",)
 etyl_section = ("รากศัพท์", *[f"รากศัพท์ {idx}" for idx in range(1, 10)])
 _sections = [
     *etyl_section,

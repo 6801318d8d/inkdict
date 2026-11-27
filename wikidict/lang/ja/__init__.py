@@ -23,6 +23,7 @@ head_sections = (
     "日本語",  # japanese
     "記号",  # symbol
 )
+foreign_head_sections = ("{{$code}}", "{{l|$code}}")
 section_patterns = ("#", r"\*")
 section_sublevels = (3, 4, 5)
 etyl_section = ("{{etym}}", "字源")

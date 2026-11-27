@@ -92,11 +92,14 @@ class BaseFormat:
     def website(self) -> str:
         return constants.WEBSITE
 
+    # In a dictionary the source language is the one of its entries and the target the one of its definitions,
+    # the reverse of the locale: `it:en` (English words from the Italian Wiktionary) is an EN-IT dictionary,
+    # named `dict-en-it` and offered by e-readers for English books.
     def effective_lang_src(self) -> str:
-        return self._lang_src
+        return self._lang_dst
 
     def effective_lang_dst(self) -> str:
-        return self._lang_dst
+        return self._lang_src
 
     def dictionary_file(self, output_file: str, *, output_dir: Path | None = None) -> Path:
         return (output_dir or self.output_dir) / output_file.format(

@@ -14,6 +14,7 @@ head_sections = (
     "한국어",  # Korean
     "국제",  # international
 )
+foreign_head_sections = ("$name",)
 section_sublevels = (3, 4)
 sections = (
     # https://ko.wiktionary.org/w/index.php?title=모듈:headword/data&oldid=4480618#L-41

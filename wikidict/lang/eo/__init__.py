@@ -15,6 +15,7 @@ template_trans = "Ŝablono"
 section_patterns = ("#", r":\[\d+\]", r"\*")
 section_sublevels = (3, 4)
 head_sections = ("{{lingvo|eo}}", "{{lingvo|mul}}", "esperanto", "multldingva", "translingva")
+foreign_head_sections = ("{{lingvo|$code}}",)
 etyl_section = ("{{deveno}}", "{{etimologio}}")
 sections = (
     *etyl_section,

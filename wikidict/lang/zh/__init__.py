@@ -5,6 +5,7 @@ from functools import lru_cache
 
 import regex
 
+from .. import defaults
 from .template_overrides import overrides as template_overrides  # noqa: F401
 
 random_word_url = "https://zh.wiktionary.org/wiki/Special:RandomRootpage"
@@ -15,6 +16,30 @@ head_sections = (
     "汉语",  # Chinese simp
     "跨語言",  # Translingual
 )
+foreign_head_sections = ("$name",)
+
+
+# `×语` (simplified), `×語` (traditional), and `×文` are all in use
+SECTION_SUFFIXES = "语語文"
+
+
+def foreign_names(code: str, locale: str) -> tuple[str, ...]:
+    """Sections use either the simplified or the traditional form, and either "×语" or "×文".
+
+    >>> foreign_names("en", "zh")
+    ('英文', '英语', '英語')
+    >>> foreign_names("zzz", "zh")
+    ()
+
+    """
+    ret: list[str] = []
+    for name in defaults.foreign_names(code, locale):
+        ret.append(name)
+        if name[-1] in SECTION_SUFFIXES:
+            ret.extend(f"{name[:-1]}{suffix}" for suffix in SECTION_SUFFIXES)
+    return tuple(dict.fromkeys(ret))
+
+
 etyl_section = ("词源", "詞源", *[f"词源 {idx}" for idx in range(1, 20)])
 section_sublevels = (3, 4)
 sections = (

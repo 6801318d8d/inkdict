@@ -12,6 +12,7 @@ template_trans = "Šablona"
 
 section_sublevels = (3, 4)
 head_sections = ("čeština",)
+foreign_head_sections = ("$name",)
 etyl_section = ("etymologie",)
 sections = (
     *etyl_section,

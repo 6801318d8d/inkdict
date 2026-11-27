@@ -1320,18 +1320,17 @@ def extract_keywords_from(parts: list[str]) -> defaultdict[str, str]:
 
 
 @lru_cache
-def cache_interesting_sections(locale: str) -> re.Pattern[str]:
-    equals = "=" * lang.section_level[locale]
-    return re.compile(
-        rf"(?im)^{equals}++[ ]*+(?:{'|'.join(re.escape(section) for section in lang.head_sections[locale])})"
-    )
+def cache_interesting_sections(lang_src: str, lang_dst: str) -> re.Pattern[str]:
+    equals = "=" * lang.section_level[lang_src]
+    head_sections = lang.head_sections_for(lang_src, lang_dst)
+    return re.compile(rf"(?im)^{equals}++[ ]*+(?:{'|'.join(re.escape(section) for section in head_sections)})")
 
 
-def extract_relevant_sections(wikitext: str, locale: str) -> str:
-    """Extract relevant sections for the chosen locale from a given wikitext."""
-    level = lang.section_level[locale]
+def extract_relevant_sections(wikitext: str, lang_src: str, lang_dst: str) -> str:
+    """Extract the sections of `lang_dst` words from a page of the `lang_src` Wiktionary."""
+    level = lang.section_level[lang_src]
     equals = "=" * level
-    interesting_sections = cache_interesting_sections(locale)
+    interesting_sections = cache_interesting_sections(lang_src, lang_dst)
 
     cleaned: list[str] = []
     in_expected_section = False

@@ -16,6 +16,7 @@ module_trans = "Mòdul"
 template_trans = "Plantilla"
 
 head_sections = ("{{-ca-}}", "{{-mul-}}")
+foreign_head_sections = ("{{-$code-}}",)
 etyl_section = ("{{-etimologia-", "{{-etim-", "{{etim-lang")
 sections = (
     *etyl_section,

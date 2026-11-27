@@ -17,6 +17,7 @@ template_trans = "Шаблон"
 section_level = 1
 section_sublevels = (3, 4)
 head_sections = ("{{-ru-}}", "{{-ru-|nocat}}", "{{-mul-}}")
+foreign_head_sections = ("{{-$code-}}", "{{-$code-|nocat}}")
 etyl_section = ("этимология",)
 sections = (
     *etyl_section,

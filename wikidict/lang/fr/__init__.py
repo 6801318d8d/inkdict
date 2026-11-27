@@ -22,6 +22,7 @@ head_sections = (
     "{{langue|conv}}",
     # "{{caractère}}",  # See #2634
 )
+foreign_head_sections = ("{{langue|$code}}",)
 etyl_section = ("{{s|étymologie}}",)
 core_sections = [
     "abréviations",

@@ -15,6 +15,7 @@ template_trans = "Format"
 section_patterns = ("#", r"\*")
 section_sublevels = (3,)
 head_sections = ("{{limba|ron}}", "{{limba|ro}}", "{{limba|conv}}")
+foreign_head_sections = ("{{limba|$code3}}", "{{limba|$code}}")
 etyl_section = ("{{etimologie}}",)
 core_sections = (
     "abr",

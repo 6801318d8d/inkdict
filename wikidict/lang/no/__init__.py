@@ -12,6 +12,7 @@ module_trans = "Modul"
 template_trans = "Mal"
 
 head_sections = ("norsk",)
+foreign_head_sections = ("$name",)
 section_sublevels = (3, 4)
 etyl_section = ("etymologi",)
 sections = (

@@ -24,6 +24,7 @@ head_sections = (
     "{{-mul-}}",
     "tværsprogligt",
 )
+foreign_head_sections = ("{{$code}}", "{{=$code=}}", "{{-$code-}}")
 etyl_section = ("{{etym}}", "{{etym2}}", "etymologi", "etymologi 1", "etymologi 2", "etymologi 3", "etymologi 4")
 sections = (
     *etyl_section,

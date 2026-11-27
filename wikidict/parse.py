@@ -427,6 +427,11 @@ def main(locale: str) -> int:
 
     source_dir = get_source_dir(lang_src)
     if not (input_file := get_latest_xml_file(source_dir)):
+        # The XML file is deleted once parsed: the dump may be parsed already, for another dictionary of this Wiktionary
+        dump = get_latest_dump_file(source_dir)
+        if dump and (output := get_output_file(source_dir, dump.stem[6:14])).is_file():
+            log.info("Already parsed into %s", output)
+            return 0
         log.error("No dump found. Run with --download first ... ")
         return 1
 
@@ -434,7 +439,9 @@ def main(locale: str) -> int:
     output = get_output_file(source_dir, input_file.stem[6:14])
     if output.is_file():
         log.info("Already parsed into %s", output)
-    elif process(input_file, locale):
+    # The database holds every page of the dump and is shared by all the dictionaries built from it
+    # (`it`, `it:en`, ...): always parse it as the source Wiktionary, so that its modules are stored.
+    elif process(input_file, lang_src):
         # Do not keep the (big) XML file
         input_file.unlink()
     else:

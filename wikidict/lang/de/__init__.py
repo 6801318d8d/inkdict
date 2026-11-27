@@ -12,6 +12,7 @@ template_trans = "Vorlage"
 
 section_sublevels = (3, 4)
 head_sections = ("{{sprache|deutsch}}", "{{sprache|international}}")
+foreign_head_sections = ("{{sprache|$name}}",)
 etyl_section = ("{{herkunft}}",)
 sections = (
     *etyl_section,

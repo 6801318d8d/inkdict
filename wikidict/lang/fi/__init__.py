@@ -20,6 +20,7 @@ head_sections = (
     "suomi",  # Finnish
     "kansainvälinen",  # international
 )
+foreign_head_sections = ("$name",)
 etyl_section = ("etymologia",)
 sections = (
     *etyl_section,
