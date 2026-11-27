@@ -15,6 +15,7 @@ deleted. Pairs with no word, too few, or that fail, are recorded in `status-<sou
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -24,6 +25,7 @@ from pathlib import Path
 from mediawiki_langcodes import code_to_name
 
 STATUS_RELEASE = "build-status"
+RATE_LIMITED = re.compile(r"HTTP 403|HTTP 429|rate limit", re.IGNORECASE)
 REPO = os.environ["GITHUB_REPOSITORY"]
 SOURCE = os.environ["SOURCE"]
 SNAPSHOT = os.environ["SNAPSHOT"]
@@ -43,7 +45,17 @@ def run(*args: str) -> tuple[int, str]:
 
 
 def gh(*args: str, check: bool = True) -> str:
-    return subprocess.run(["gh", *args], check=check, capture_output=True, text=True).stdout
+    """Run gh and return its output. GitHub answers bursts of calls (30 jobs at once) with HTTP 403 or 429 "rate
+    limit": then wait 1, 2 and 4 minutes and try again."""
+    for wait in (60, 120, 240, 0):
+        proc = subprocess.run(["gh", *args], check=False, capture_output=True, text=True)
+        if not proc.returncode or not wait or not RATE_LIMITED.search(proc.stderr):
+            break
+        print(f"gh {' '.join(args[:2])}: {proc.stderr.strip()[:120]}; again in {wait} s", flush=True)
+        time.sleep(wait)
+    if check and proc.returncode:
+        raise subprocess.CalledProcessError(proc.returncode, proc.args, proc.stdout, proc.stderr)
+    return proc.stdout
 
 
 def name(code: str) -> str:
@@ -123,7 +135,11 @@ def save_status(recorded: dict[str, str]) -> None:
             "Used by the Dictionaries workflow: the pairs found empty or failing for each dump.",
             check=False,
         )
-    gh("release", "upload", STATUS_RELEASE, "-R", REPO, str(file), "--clobber")
+    try:
+        gh("release", "upload", STATUS_RELEASE, "-R", REPO, str(file), "--clobber")
+    except subprocess.CalledProcessError as exc:
+        # not fatal: the pairs recorded here are only built once more by the next run
+        print(f"::warning::status-{SOURCE}.json not saved: {exc.stderr.strip()[:200]}", flush=True)
 
 
 def count_words(src: str, dst: str) -> int:
