@@ -51,6 +51,8 @@ Then download this project: `git clone https://github.com/6801318d8d/inkdict.git
 
 ## Graphical interface
 
+![The inkdict window after building an English-Italian dictionary (it:en) for Kobo, KOReader and Kindle](assets/gui.png)
+
 - Windows: double-click `start_gui.bat`.
 - GNU/Linux and macOS: run `./start_gui.sh` in a terminal.
 
