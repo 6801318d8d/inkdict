@@ -118,3 +118,32 @@ jobs:
 
       - name: Build and publish the dictionaries
         run: python .github/scripts/build_dictionaries.py
+
+  # The README lists every published dictionary, linked to its release: rewrite it once all the builds are over
+  readme:
+    needs: build
+    if: always() && needs.build.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}  # the branch as it is now, not as it was hours ago when the run started
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: List the dictionaries in the README
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m pip install "mediawiki-langcodes==0.2.28"
+          python .github/scripts/update_readme.py
+          if ! git diff --quiet README.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "README: list of the published dictionaries" README.md
+            git push
+          fi
